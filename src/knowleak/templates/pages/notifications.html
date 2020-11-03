@@ -1,0 +1,149 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Notifications {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+{% block jquery %}
+<script type="text/javascript">
+  var update = 0;
+  
+   (function poll(){
+    setTimeout(function(){
+    $.ajax({
+      url:'/api',
+      method: 'GET',
+      success: function(data){
+        var timestamps = []
+        var flowrates = []
+        var pressures = []
+
+        if(data.length == update){
+          console.log('no data received');
+        } else{
+          console.log(data)
+          $.each(data, function(index, element){
+            timestamps.push(element.timestamp);
+            pressures.push(element.pressure);
+            flowrates.push(element.flowrate);
+            update++;
+          })
+        
+          let a = gaussianProb(pressures[pressures.length - 1], pressures.slice(0,-1));
+          let b = gaussianProb(flowrates[flowrates.length - 1], flowrates.slice(0,-1));
+
+          let est = a*b;
+
+          if (est >= 0.02){
+            console.log('No leakage detected')
+          } else{
+            console.log('Leakage detected')
+            let v = flowrates[flowrates.length - 1];
+            let u = flowrates[flowrates.length - 2];
+
+            let a = (v - u) / 60;
+            let x = ((v**2) - (u**2)) / (2*a);
+
+            console.log('the leak has been detected at ' + x + ' metres')
+            let today = new Date();
+            var time = today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds();
+            let notif = document.getElementById('message-box');
+            let row = `
+            <a class="list-group-item list-group-item-action">
+              <div class="media">
+                <img src='{% static "img/lifesaver.svg"%}' width="45" height="45" alt="" style="padding: 4px">
+                    <div class="media-body">
+                      <strong>Leakage Detected </strong>at a distance <strong>${x} metres</strong> from sensor
+                    <div class="text-muted smaller">Today at ${time}</div>
+                </div>
+              </div>
+            </a>
+            `
+            notif.innerHTML += row
+        }
+
+        }
+
+      },
+      dataType:'json',
+      complete: poll,
+      timeout: 10000,
+    });
+    }, 10000);
+  })();
+
+  function gaussianProb(value, array){
+    var total = 0;
+    for (var key in array){
+      total += array[key];
+    }
+    var mean = total / array.length;
+
+    var stdev = 0;
+    for(var key in array){
+      stdev += Math.pow((parseFloat(array[key]) - mean), 2);
+    }
+    var variance = stdev / (array.length - 1);
+
+    console.log(mean, variance)
+
+    var expo = 0;
+    expo = Math.exp(-((Math.pow((value - mean), 2)) / (2*variance)));
+
+    prob = (1 / (Math.sqrt(2*Math.PI) * Math.sqrt(variance))) * expo;
+
+    console.log(prob);
+  }
+
+</script>
+{% endblock %}
+<div class="menu">
+	<div class="container">
+		<div class="row">
+			<div class ="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+				<nav class="nav nav-tabs nav-fill">
+				  <a class="nav-link" href="/">Dashboard</a>
+				  <a class="nav-link" href="/reports/">Reports</a>
+				  <a class="nav-link active" href="/notifications/">Notifications</a>
+				  <a class="nav-link" href="/profile/">User Profile</a>
+				  <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Settings</a>
+				</nav>
+			</div>
+		</div>
+	</div>
+</div>
+<br>
+<div class="data-table">
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+				<div class="row">
+			      <div class="col">
+			        <div class="card card-small mb-4">
+			          <div class="card-body">
+			              
+			              <div class="card">
+			                <div class="card-header">
+			                  <h5 class="card-title">Leakage Detection</h5>
+			            		<h6 class="card-subtitle mb-2 text-muted">Location of Possible Leakage Points</h6></div>
+				                <div class="list-group list-group-flush small">
+				                  <div id="message-box">
+				                  	
+				                  </div>
+				                </div>
+			                <div class="card-footer small text-muted">Updated 0mins ago</div>
+			              </div>
+			          </div>
+
+
+			      </div>
+			    </div>
+			  </div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock content %}

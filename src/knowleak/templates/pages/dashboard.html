@@ -1,0 +1,236 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %} Dashboard {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+{% block jquery %}
+<script type="text/javascript">
+
+  (function poll(){
+    setTimeout(function(){
+    $.ajax({
+      url:'/api',
+      method: 'GET',
+      success: function(data){
+        var timestamps = []
+        var flowrates = []
+        var pressures = []
+        if(data == null){
+          console.log('no data receieved');
+        } else{
+          console.log(data)
+          $.each(data, function(index, element){
+            timestamps.push(element.timestamp);
+            pressures.push(element.pressure);
+            flowrates.push(element.flowrate);
+
+            if (timestamps.length > 5 && pressures.length > 5 && flowrates.length > 5){
+                  timestamps.shift();
+                  pressures.shift();
+                  flowrates.shift();
+            }
+          })
+        }
+        setChart(timestamps, pressures, flowrates)
+        newPressure(pressures)
+        newFlowrate(flowrates)
+        avePressure(pressures)
+        aveFlowrate(flowrates)
+        stat(pressures, flowrates)
+
+      },
+      dataType:'json',
+      complete: poll,
+      timeout: 10000,
+    });
+    }, 10000);
+  })();
+</script>
+{% endblock %}
+
+<div class="menu">
+	<div class="container">
+		<div class="row">
+			<div class ="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+				<nav class="nav nav-tabs nav-fill">
+				  <a class="nav-link active" href="/">Dashboard</a>
+				  <a class="nav-link" href="/reports/">Reports</a>
+				  <a class="nav-link" href="/notifications">Notifications</a>
+				  <a class="nav-link" href="/profile/">User Profile</a>
+				  <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Settings</a>
+				</nav>
+			</div>
+		</div>
+	</div>
+</div>
+<br>
+<div class="status">
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+				<div class="card-deck">
+				  <div class="card">
+				    <div class="card-header">
+				    	<h5 class="card-title">Pressure Reading</h5>
+				    </div>
+				    <div class="card-body">
+				      <h5 class="card-title">Pressure Sensor:</h5>
+				      <h1 class="card-text" id="pup">
+				      	<script type="text/javascript">
+		                function newPressure(pressures){document.getElementById('pup').innerHTML = pressures[pressures.length - 1];}
+		              </script>
+				      </h1>
+				      <h1 style="display: inline"><strong>Pa</strong></h1>
+				    </div>
+				    <div class="card-footer">
+				      <small class="text-muted">Updated 1 min ago</small>
+				    </div>
+				  </div>
+
+				  <div class="card">
+				    <div class="card-header">
+				    	<h5 class="card-title">Flowrate Reading</h5>
+				    </div>
+				    <div class="card-body">
+				      <h5 class="card-title">Flowrate Sensor:</h5>
+					      <h1 class="card-text" id="fup">
+					      <script type="text/javascript">
+			                function newFlowrate(flowrates){
+			                  document.getElementById('fup').innerHTML = flowrates[flowrates.length - 1];
+			                }
+			              </script> 
+	          			</h1>
+	          			<h1 class="card-text" style="display: inline;"><strong>cm<sup>3</sup>/s</strong></h1>
+				    </div>
+				    <div class="card-footer">
+				      <small class="text-muted">Updated 1 min ago</small>
+				    </div>
+				  </div>
+
+				  <div class="card">
+				    <div class="card-header">
+				    	<h5 class="card-title">Leakage Analysis</h5>
+				    </div>
+				    <div class="card-body">
+				      <h5 class="card-title">Anomaly Detection</h5>
+				       <p><span style="font-size: 1em; font-weight: bold;">Status :</span>
+		                <span id="leak"><script type="text/javascript">
+		                  function stat(pressures, flowrates){
+		                    var totalA = 0
+		                    pressures.forEach(function (pressure) {
+		                        totalA += pressure        
+		                    });
+		                    avgA =totalA / pressures.length
+		                    var totalB = 0
+		                    flowrates.forEach(function (flowrate) {
+		                        totalB += flowrate        
+		                    });
+		                    avgB =totalB / flowrates.length
+
+		                    if (avgA < 50 || avgB < 50){
+		                     document.getElementById('leak').innerHTML='Leakage Detected'; 
+		                    } else {
+		                      document.getElementById('leak').innerHTML='Normal Flow';
+		                    }
+		                  } 
+		                </script></span>
+		              </p>
+
+				      <p><span style="font-size: 1em; font-weight: bold;">Average Pressure:</span>
+		                <span id="pave"><script type="text/javascript">
+		                 function avePressure(pressures){
+		                    var total = 0
+		                    pressures.forEach(function (pressure) {
+		                        total += pressure        
+		                    });
+		                    avg =total / pressures.length
+		                    document.getElementById('pave').innerHTML= avg.toFixed(3);
+		                  }
+		                </script></span>
+		              </p>
+
+
+				        <p><span style="font-size: 1em; font-weight: bold;">Average Flowrate:</span>
+		                <span id="fave"><script type="text/javascript">
+		                  function aveFlowrate(flowrates){
+		                    var total = 0
+		                    flowrates.forEach(function (flowrate) {
+		                        total += flowrate        
+		                    });
+		                    avg =total / flowrates.length
+		                    document.getElementById('fave').innerHTML= avg.toFixed(3);
+		                  }
+		                </script></span>
+		              </p>
+
+				    </div>
+				    <div class="card-footer">
+				      <small class="text-muted">Updated 1 min ago</small>
+				    </div>
+				  </div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<br>
+
+<div class="graph">
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 mb-4">
+				<div class="card">
+					<div class="card-header">
+				    	<h5 class="card-title">Real-time Graph Analysis</h5>
+				    </div>
+					<div class="card-body">
+						<canvas id="myChart"></canvas>
+       					<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.js"></script>
+        				<script>
+			              function setChart(timestamps, pressures, flowrates){
+			                  var ctx = document.getElementById('myChart');
+			                  var myChart = new Chart(ctx, {
+			                    type: 'bar',
+			                    data: {
+			                        labels:timestamps,
+			                        datasets: [{
+			                            label: 'Pa',
+			                            data:pressures,
+			                            backgroundColor:'rgba(255, 99, 132, 0.2)',
+			                            borderColor:'rgba(255, 99, 132, 1)',
+			                            borderWidth: 1
+			                        }, {
+			                          label: 'cm3/min',
+			                          data:flowrates,
+			                          backgroundColor:'rgba(54, 162, 235, 0.2)',
+			                          borderColor:'rgba(54, 162, 235, 1)',
+			                          type: 'line',
+
+			                        }]
+			                    },
+			                    options: {
+			                        scales: {
+			                            yAxes: [{
+			                                ticks: {
+			                                    beginAtZero: true
+			                                }
+			                            }]
+			                        }
+			                    }
+			                });
+			                  myChart.update(0);
+			              };
+			            </script>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock content%}

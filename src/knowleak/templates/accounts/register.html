@@ -1,0 +1,76 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% block title %} Register {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+{% endblock stylesheets %}
+
+{% block content %}
+	
+	<div class="text-center">
+		<div class="container">
+			<div class="row row justify-content-md-center">
+				<div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 text-center">
+				<form class="form-signin" method="POST">
+				{% csrf_token %}
+				  <img class="mb-4" src='{% static "img/save-water.svg" %}' alt="" width="72" height="72">
+				  <h1 class="h3 mb-3 font-weight-normal">Welcome to Knowleak</h1>
+				  	<h6 class="m-0">
+	                
+	                {% if msg %}
+
+	                <span class="text-danger">{{ msg }}</span>
+
+	                {% else %}
+
+	                Add your credentials or <a href={% url 'login' %}>authenticate</a> with an existing account.
+
+	                {% endif %}
+
+	                </h6>
+
+	            	{% if success %}
+
+	                <p>
+	                  Please <a href={% url 'login' %}>authenticate</a> using the new account.
+	                </p>  
+
+	              	{% else %}
+
+				  <label for="inputUsername" class="sr-only">Username</label>
+				  {{ form.username }}
+				  <span class="text-danger">{{ form.username.errors }}</span>
+				  <br>
+
+				  <label for="inputEmail" class="sr-only">Email address</label>
+				  {{ form.email }}
+				  <span class="text-danger">{{ form.email.errors }}</span>
+				  <br>
+
+				  <label for="inputPassword1" class="sr-only">Password</label>
+				  {{ form.password1 }}
+				  <span class="text-danger">{{ form.password1.errors }}</span>
+				  <br>
+
+				  <label for="inputPassword2" class="sr-only">Password Check</label>
+				  {{ form.password2 }}
+				  <span class="text-danger">{{ form.password2.errors }}</span>
+				  <br>
+
+				  <button class="btn btn-lg btn-success btn-block" name="register" type="submit">Sign Up</button>
+				  <br>
+				  <p>Have an account? <a href="/login/"> Log In </a></p>
+
+				  {% endif %} 
+				</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+{% endblock javascripts %}
